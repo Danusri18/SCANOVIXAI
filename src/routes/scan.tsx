@@ -56,6 +56,11 @@ function SmartScan() {
       toast.error(`⚠️ ${scan.status} content detected`, {
         description: `Trust score ${scan.trustScore}/100 — do not interact with it.`,
       });
+      if (typeof Notification !== "undefined" && Notification.permission === "granted") {
+        new Notification(`⚠️ DANGER — ${scan.status} content`, {
+          body: `Trust score ${scan.trustScore}/100. ${scan.recommendations[0] ?? "Do not interact with it."}`,
+        });
+      }
     } else {
       toast.success("No threats found", { description: `Trust score ${scan.trustScore}/100` });
     }
