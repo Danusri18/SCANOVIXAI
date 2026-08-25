@@ -46,14 +46,35 @@ function fileToDataUrl(file: File) {
 }
 
 function SmartScan() {
+  const search = Route.useSearch();
+  const navigate = useNavigate();
   const [input, setInput] = useState("");
   const [scanning, setScanning] = useState(false);
   const [result, setResult] = useState<ScanResult | null>(null);
+  const [shared, setShared] = useState<string | null>(null);
   const cameraRef = useRef<HTMLInputElement>(null);
   const uploadRef = useRef<HTMLInputElement>(null);
+  const handled = useRef<string | null>(null);
 
   const runText = useServerFn(analyzeContent);
   const runImage = useServerFn(analyzeImage);
+
+  const notifyDanger = (scan: ScanResult) => {
+    if (typeof Notification === "undefined" || Notification.permission !== "granted") return;
+    const notification = new Notification(`⚠️ DANGER — ${scan.status} content`, {
+      body: `Trust score ${scan.trustScore}/100. ${scan.recommendations[0] ?? "Do not interact with it."}`,
+      icon: "/icon-192.png",
+      badge: "/icon-192.png",
+      tag: `scanovix-${scan.id}`,
+      requireInteraction: true,
+      data: { deepLink: `/scan?id=${scan.id}` },
+    });
+    notification.onclick = () => {
+      window.focus();
+      notification.close();
+      void navigate({ to: "/scan", search: { id: scan.id } });
+    };
+  };
 
   const finish = (scan: ScanResult) => {
     setResult(scan);
@@ -62,11 +83,7 @@ function SmartScan() {
       toast.error(`⚠️ ${scan.status} content detected`, {
         description: `Trust score ${scan.trustScore}/100 — do not interact with it.`,
       });
-      if (typeof Notification !== "undefined" && Notification.permission === "granted") {
-        new Notification(`⚠️ DANGER — ${scan.status} content`, {
-          body: `Trust score ${scan.trustScore}/100. ${scan.recommendations[0] ?? "Do not interact with it."}`,
-        });
-      }
+      notifyDanger(scan);
     } else {
       toast.success("No threats found", { description: `Trust score ${scan.trustScore}/100` });
     }
