@@ -1,14 +1,21 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { Camera, ClipboardPaste, ImageUp, Loader2, QrCode, ScanLine, ShieldAlert } from "lucide-react";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { AppShell } from "@/components/AppShell";
 import { ScanResultCard } from "@/components/ScanResultCard";
-import { addScan } from "@/lib/history";
+import { addScan, getScan } from "@/lib/history";
 import { analyzeContent, analyzeImage } from "@/lib/scan.functions";
 import { detectType, labelForType, type ScanResult } from "@/lib/scan-engine";
+
+type ScanSearch = {
+  url?: string | undefined;
+  text?: string | undefined;
+  title?: string | undefined;
+  id?: string | undefined;
+};
 
 export const Route = createFileRoute("/scan")({
   head: () => ({
@@ -27,6 +34,13 @@ export const Route = createFileRoute("/scan")({
       },
     ],
   }),
+  validateSearch: (search: Record<string, unknown>): ScanSearch => {
+    const str = (key: string) => {
+      const value = search[key];
+      return typeof value === "string" && value.trim() ? value : undefined;
+    };
+    return { url: str("url"), text: str("text"), title: str("title"), id: str("id") };
+  },
   component: SmartScan,
 });
 
@@ -40,14 +54,35 @@ function fileToDataUrl(file: File) {
 }
 
 function SmartScan() {
+  const search = Route.useSearch();
+  const navigate = useNavigate();
   const [input, setInput] = useState("");
   const [scanning, setScanning] = useState(false);
   const [result, setResult] = useState<ScanResult | null>(null);
+  const [shared, setShared] = useState<string | null>(null);
   const cameraRef = useRef<HTMLInputElement>(null);
   const uploadRef = useRef<HTMLInputElement>(null);
+  const handled = useRef<string | null>(null);
 
   const runText = useServerFn(analyzeContent);
   const runImage = useServerFn(analyzeImage);
+
+  const notifyDanger = (scan: ScanResult) => {
+    if (typeof Notification === "undefined" || Notification.permission !== "granted") return;
+    const notification = new Notification(`⚠️ DANGER — ${scan.status} content`, {
+      body: `Trust score ${scan.trustScore}/100. ${scan.recommendations[0] ?? "Do not interact with it."}`,
+      icon: "/icon-192.png",
+      badge: "/icon-192.png",
+      tag: `scanovix-${scan.id}`,
+      requireInteraction: true,
+      data: { deepLink: `/scan?id=${scan.id}` },
+    });
+    notification.onclick = () => {
+      window.focus();
+      notification.close();
+      void navigate({ to: "/scan", search: { id: scan.id } });
+    };
+  };
 
   const finish = (scan: ScanResult) => {
     setResult(scan);
@@ -56,11 +91,7 @@ function SmartScan() {
       toast.error(`⚠️ ${scan.status} content detected`, {
         description: `Trust score ${scan.trustScore}/100 — do not interact with it.`,
       });
-      if (typeof Notification !== "undefined" && Notification.permission === "granted") {
-        new Notification(`⚠️ DANGER — ${scan.status} content`, {
-          body: `Trust score ${scan.trustScore}/100. ${scan.recommendations[0] ?? "Do not interact with it."}`,
-        });
-      }
+      notifyDanger(scan);
     } else {
       toast.success("No threats found", { description: `Trust score ${scan.trustScore}/100` });
     }
@@ -112,6 +143,35 @@ function SmartScan() {
     }
   };
 
+  // Deep links: shared content from SMS/WhatsApp/email, or a notification tap (?id=)
+  useEffect(() => {
+    const key = `${search.id ?? ""}|${search.url ?? ""}|${search.text ?? ""}|${search.title ?? ""}`;
+    if (key === "|||" || handled.current === key) return;
+    handled.current = key;
+
+    if (search.id) {
+      const saved = getScan(search.id);
+      if (saved) {
+        setResult(saved);
+        setInput(saved.content);
+        setShared("Opened from alert");
+      } else {
+        toast.error("That scan is no longer in your history");
+      }
+      return;
+    }
+
+    const incoming = [search.url, search.text, search.title]
+      .filter((v): v is string => Boolean(v && v.trim()))
+      .join("\n")
+      .trim();
+    if (!incoming) return;
+    setInput(incoming);
+    setShared("Shared into Scanovix");
+    void scanText(incoming);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search.id, search.url, search.text, search.title]);
+
   const detected = input.trim() ? labelForType(detectType(input)) : null;
 
   return (
@@ -120,6 +180,12 @@ function SmartScan() {
       <p className="mt-1 text-sm text-muted-foreground">
         One field for everything. The AI figures out what you pasted and scans it.
       </p>
+
+      {shared && (
+        <p className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-secondary/60 px-3 py-1 text-[11px] font-medium text-accent">
+          <ScanLine className="size-3" /> {shared}
+        </p>
+      )}
 
       <section className="glass relative mt-5 overflow-hidden rounded-3xl p-4">
         {scanning && (

@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { BellRing, Lightbulb, ShieldAlert, ShieldCheck, UserRound } from "lucide-react";
+import { BellRing, Lightbulb, Share2, ShieldAlert, ShieldCheck, UserRound } from "lucide-react";
 import { toast } from "sonner";
 
 import { AppShell } from "@/components/AppShell";
@@ -145,6 +145,23 @@ function ProfilePage() {
           checked={profile.tips}
           onChange={(v) => update({ tips: v })}
         />
+      </div>
+
+      <h2 className="mt-6 font-display text-sm font-semibold">Real-time share protection</h2>
+      <div className="glass mt-3 space-y-2 rounded-2xl p-4 text-[11px] text-muted-foreground">
+        <p className="flex items-start gap-2">
+          <Share2 className="mt-0.5 size-4 shrink-0 text-accent" />
+          Install Scanovix (browser menu → <span className="text-foreground">Add to Home screen</span>). It then
+          appears in the Android/Chrome share sheet.
+        </p>
+        <p>
+          In SMS, WhatsApp, Gmail or any app, tap <span className="text-foreground">Share → Scanovix</span> on a
+          suspicious link or message. It opens straight into Smart Scan and analyses it automatically.
+        </p>
+        <p>
+          Dangerous verdicts fire a pop-up alert; tapping it deep-links you back to that exact scan result and its
+          recommended action.
+        </p>
       </div>
 
       <div className="glass mt-4 flex items-start gap-3 rounded-2xl p-4">
