@@ -10,7 +10,12 @@ import { addScan, getScan } from "@/lib/history";
 import { analyzeContent, analyzeImage } from "@/lib/scan.functions";
 import { detectType, labelForType, type ScanResult } from "@/lib/scan-engine";
 
-type ScanSearch = { url?: string; text?: string; title?: string; id?: string };
+type ScanSearch = {
+  url?: string | undefined;
+  text?: string | undefined;
+  title?: string | undefined;
+  id?: string | undefined;
+};
 
 export const Route = createFileRoute("/scan")({
   head: () => ({
