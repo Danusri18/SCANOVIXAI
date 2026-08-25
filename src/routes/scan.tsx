@@ -1,12 +1,12 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { Camera, ClipboardPaste, ImageUp, Loader2, QrCode, ScanLine, ShieldAlert } from "lucide-react";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { AppShell } from "@/components/AppShell";
 import { ScanResultCard } from "@/components/ScanResultCard";
-import { addScan } from "@/lib/history";
+import { addScan, getScan } from "@/lib/history";
 import { analyzeContent, analyzeImage } from "@/lib/scan.functions";
 import { detectType, labelForType, type ScanResult } from "@/lib/scan-engine";
 
