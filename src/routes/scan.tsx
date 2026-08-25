@@ -135,6 +135,35 @@ function SmartScan() {
     }
   };
 
+  // Deep links: shared content from SMS/WhatsApp/email, or a notification tap (?id=)
+  useEffect(() => {
+    const key = `${search.id ?? ""}|${search.url ?? ""}|${search.text ?? ""}|${search.title ?? ""}`;
+    if (key === "|||" || handled.current === key) return;
+    handled.current = key;
+
+    if (search.id) {
+      const saved = getScan(search.id);
+      if (saved) {
+        setResult(saved);
+        setInput(saved.content);
+        setShared("Opened from alert");
+      } else {
+        toast.error("That scan is no longer in your history");
+      }
+      return;
+    }
+
+    const incoming = [search.url, search.text, search.title]
+      .filter((v): v is string => Boolean(v && v.trim()))
+      .join("\n")
+      .trim();
+    if (!incoming) return;
+    setInput(incoming);
+    setShared("Shared into Scanovix");
+    void scanText(incoming);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search.id, search.url, search.text, search.title]);
+
   const detected = input.trim() ? labelForType(detectType(input)) : null;
 
   return (
