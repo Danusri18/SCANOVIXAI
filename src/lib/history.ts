@@ -99,3 +99,7 @@ export function useStats() {
     securityScore: Math.max(35, Math.min(100, 70 + safe * 2 - fake * 3)),
   };
 }
+
+export function getScan(id: string): ScanResult | null {
+  return read().find((s) => s.id === id) ?? null;
+}
