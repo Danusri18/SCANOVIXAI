@@ -27,6 +27,12 @@ export const Route = createFileRoute("/scan")({
       },
     ],
   }),
+  validateSearch: (search: Record<string, unknown>) => ({
+    url: typeof search.url === "string" ? search.url : undefined,
+    text: typeof search.text === "string" ? search.text : undefined,
+    title: typeof search.title === "string" ? search.title : undefined,
+    id: typeof search.id === "string" ? search.id : undefined,
+  }),
   component: SmartScan,
 });
 
