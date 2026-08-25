@@ -173,6 +173,12 @@ function SmartScan() {
         One field for everything. The AI figures out what you pasted and scans it.
       </p>
 
+      {shared && (
+        <p className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-secondary/60 px-3 py-1 text-[11px] font-medium text-accent">
+          <ScanLine className="size-3" /> {shared}
+        </p>
+      )}
+
       <section className="glass relative mt-5 overflow-hidden rounded-3xl p-4">
         {scanning && (
           <div className="gradient-hero scan-sweep pointer-events-none absolute inset-x-0 top-0 h-14 opacity-25" />
