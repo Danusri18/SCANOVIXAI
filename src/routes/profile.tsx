@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { BellRing, Lightbulb, ShieldAlert, ShieldCheck, UserRound } from "lucide-react";
+import { BellRing, Lightbulb, Share2, ShieldAlert, ShieldCheck, UserRound } from "lucide-react";
 import { toast } from "sonner";
 
 import { AppShell } from "@/components/AppShell";
